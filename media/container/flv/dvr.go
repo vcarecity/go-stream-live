@@ -6,6 +6,7 @@ import (
 	"go-stream-live/media/protocol/amf"
 	"go-stream-live/media/utils/pio"
 	"go-stream-live/media/utils/uid"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -18,7 +19,13 @@ var (
 	flvHeader = []byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09}
 )
 
-type FlvDvr struct{}
+type FlvDvr struct {
+	Dir string
+}
+
+func NewFlvDvr(dir string) *FlvDvr {
+	return &FlvDvr{Dir: dir}
+}
 
 func (f *FlvDvr) GetWriter(info av.Info) av.WriteCloser {
 	paths := strings.SplitN(info.Key, "/", 2)
@@ -27,14 +34,20 @@ func (f *FlvDvr) GetWriter(info av.Info) av.WriteCloser {
 		return nil
 	}
 
-	err := os.MkdirAll(paths[0], 0755)
+	saveDir := filepath.Join(f.Dir, paths[0])
+	_, err := os.Stat(saveDir)
 	if err != nil {
-		log.Errorln("mkdir error:", err)
-		return nil
+		err := os.MkdirAll(saveDir, 0755)
+		if err != nil {
+			log.Errorln("mkdir error:", err)
+			return nil
+		}
 	}
 
-	fileName := fmt.Sprintf("%s_%d.%s", info.Key, time.Now().Unix(), "flv")
-	log.Infof("flv dvr save stream to: ", fileName)
+	fileName := fmt.Sprintf("%s_%d.%s", filepath.Join(f.Dir, info.Key), time.Now().Unix(), "flv")
+
+	log.Debugf("flv dvr save stream to: %s", fileName)
+
 	w, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
 		log.Errorln("open file error: ", err)

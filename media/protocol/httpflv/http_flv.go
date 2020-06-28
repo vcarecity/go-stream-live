@@ -39,9 +39,11 @@ func NewServer(h av.Handler) *Server {
 func (self *Server) Serve(l net.Listener) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.handleConn(w, r)
 	})
 	mux.HandleFunc("/streams", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.getStream(w, r)
 	})
 	http.Serve(l, mux)

@@ -89,8 +89,7 @@ func (self *Server) Serve(listener net.Listener) (err error) {
 			return
 		}
 		conn := core.NewConn(netconn, 4*1024)
-		log.Infoln("new client, connect remote:", conn.RemoteAddr().String(),
-			"local:", conn.LocalAddr().String())
+		log.Debugf("new client, connect remote: %s. local: %s", conn.RemoteAddr().String(), conn.LocalAddr().String())
 		go self.handleConn(conn)
 	}
 }
@@ -111,7 +110,7 @@ func (self *Server) handleConn(conn *core.Conn) error {
 	if connServer.IsPublisher() {
 		reader := NewVirReader(connServer)
 		self.handler.HandleReader(reader)
-		log.Infof("new publisher: %+v", reader.Info())
+		log.Debugf("new publisher: %v", reader.Info())
 
 		if len(self.getters) > 0 {
 			for _, getter := range self.getters {
@@ -123,7 +122,7 @@ func (self *Server) handleConn(conn *core.Conn) error {
 		}
 	} else {
 		writer := NewVirWriter(connServer)
-		log.Infof("new player: %+v", writer.Info())
+		log.Infof("new player: %v", writer.Info())
 		self.handler.HandleWriter(writer)
 	}
 

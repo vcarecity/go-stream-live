@@ -66,7 +66,7 @@ func (self *Server) GetWriter(info av.Info) av.WriteCloser {
 		info.UID = uid.NEWID()
 		info.Inter = false
 		info.Type = "hls"
-		log.Infoln("new hls source: ", info)
+		log.Debugf("new hls source: %v", info)
 		s = NewSource(info)
 		self.conns.Set(info.Key, s)
 	} else {
@@ -89,7 +89,7 @@ func (self *Server) checkStop() {
 		for item := range self.conns.IterBuffered() {
 			v := item.Val.(*Source)
 			if !v.Alive() {
-				log.Infoln("check stop and remove: ", v.Info())
+				log.Debugf("check stop and remove: %v", v.Info())
 				self.conns.Remove(item.Key)
 			}
 		}
@@ -216,7 +216,7 @@ func NewSource(info av.Info) *Source {
 	go func() {
 		err := s.SendPacket()
 		if err != nil {
-			log.Errorln("send packet error: ", err)
+			log.Errorf("send packet error: %v\n", err)
 			s.closed = true
 		}
 	}()
@@ -290,7 +290,7 @@ func (self *Source) SendPacket() error {
 
 			err := self.demuxer.Demux(&p)
 			if err == flv.ErrAvcEndSEQ {
-				log.Errorln(err)
+				log.Errorf("%v", err)
 				continue
 			} else {
 				if err != nil {

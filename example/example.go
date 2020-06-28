@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	nested "github.com/antonfisher/nested-logrus-formatter"
 	log "github.com/sirupsen/logrus"
 	"go-stream-live/media/av"
 	"go-stream-live/media/container/flv"
@@ -15,7 +16,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"time"
@@ -33,7 +33,7 @@ var (
 	flvAddr   = flag.String("flvAddr", ":8081", "the http-flv server address to bind.")
 	hlsAddr   = flag.String("hlsAddr", ":8080", "the hls server address to bind.")
 	operaAddr = flag.String("operaAddr", "", "the http operation or config address to bind: 8082.")
-	flvDvr    = flag.Bool("flvDvr", false, "enable flv dvr")
+	flvDvr    = flag.Bool("flvDvr", true, "enable flv dvr")
 )
 
 var (
@@ -44,16 +44,13 @@ func BuildTime() string {
 	return buildTime
 }
 
-type MyLogFormatter struct{}
-
-func (s *MyLogFormatter) Format(entry *log.Entry) ([]byte, error) {
-	timestamp := time.Now().Local().Format("2006/01/02 15:04:05")
-	msg := fmt.Sprintf("%s [%s] %s", timestamp, strings.ToUpper(entry.Level.String()), entry.Message)
-	return []byte(msg), nil
-}
-
 func init() {
-	log.SetFormatter(new(MyLogFormatter))
+	log.SetFormatter(&nested.Formatter{
+		HideKeys:        true,
+		TimestampFormat: "2006-01-02 15:04:05",
+		FieldsOrder:     []string{"component", "category"},
+	})
+	log.SetLevel(log.DebugLevel)
 	log.SetOutput(os.Stdout)
 
 	flag.Usage = func() {
@@ -173,7 +170,8 @@ func startHTTPOpera(stream *rtmp.RtmpStream) {
 
 func startFlvDvr() {
 	if *flvDvr {
-		fd := new(flv.FlvDvr)
+		// fd := new(flv.FlvDvr)
+		fd := flv.NewFlvDvr(`E:\GoPath\src\go-stream-live\build`)
 		Getters = append(Getters, fd)
 	}
 }
@@ -189,15 +187,15 @@ func startPprof() {
 }
 
 func mylog() {
-	log.Printf("SMS Version:  %s\tBuildTime:  %s\n", VERSION, BuildTime())
-	log.Printf("SMS Start, Rtmp Listen On %s\n", *rtmpAddr)
-	log.Printf("SMS Start, Hls Listen On %s\n", *hlsAddr)
-	log.Printf("SMS Start, HTTP-flv Listen On %s\n", *flvAddr)
+	log.Printf("SMS Version:  %s\tBuildTime:  %s", VERSION, BuildTime())
+	log.Printf("SMS Start, Rtmp Listen On %s", *rtmpAddr)
+	log.Printf("SMS Start, Hls Listen On %s", *hlsAddr)
+	log.Printf("SMS Start, HTTP-flv Listen On %s", *flvAddr)
 	if *operaAddr != "" {
-		log.Printf("SMS Start, HTTP-Operation Listen On %s\n", *operaAddr)
+		log.Printf("SMS Start, HTTP-Operation Listen On %s", *operaAddr)
 	}
 	if *prof != "" {
-		log.Printf("SMS Start, Pprof Server Listen On %s\n", *prof)
+		log.Printf("SMS Start, Pprof Server Listen On %s", *prof)
 	}
 	if *flvDvr {
 		log.Printf("SMS Start, Flv Dvr Save On [%s]", "app/streamName.flv")

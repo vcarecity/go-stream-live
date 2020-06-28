@@ -277,7 +277,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			self.done = true
 			self.isPublisher = true
-			log.Infoln("handle publish req done")
+			log.Debugf("handle publish req done")
 		case cmdPlay:
 			if err = self.publishOrPlay(vs[1:]); err != nil {
 				return err
@@ -287,7 +287,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			self.done = true
 			self.isPublisher = false
-			log.Infoln("handle play req done")
+			log.Debugf("handle play req done")
 		case cmdFcpublish:
 			self.fcPublish(vs)
 		case cmdReleaseStream:
