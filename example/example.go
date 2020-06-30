@@ -11,6 +11,7 @@ import (
 	"go-stream-live/media/protocol/httpflv"
 	"go-stream-live/media/protocol/httpopera"
 	"go-stream-live/media/protocol/rtmp"
+	"go-stream-live/media/protocol/wsflv"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -87,6 +88,9 @@ func main() {
 	startRtmp(stream, Getters)
 	// http-flv
 	startHTTPFlv(stream)
+	// websocket flv
+	// startWebsocketFlv(stream)
+
 	// http-opera
 	startHTTPOpera(stream)
 	// pprof
@@ -152,6 +156,24 @@ func startHTTPFlv(stream *rtmp.RtmpStream) {
 			}
 		}()
 		hdlServer.Serve(flvListen)
+	}()
+}
+
+func startWebsocketFlv(stream *rtmp.RtmpStream) {
+	flvListen, err := net.Listen("tcp", *flvAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// wsServer := wsflv.NewServer(stream)
+	wsServer := wsflv.NewServerFunc(stream, httpFlvCloseCallback)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Errorln("hls server panic: ", r)
+			}
+		}()
+		wsServer.Serve(flvListen)
 	}()
 }
 
