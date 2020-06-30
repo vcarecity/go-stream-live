@@ -30,10 +30,10 @@ var (
 	buildTime string
 	prof      = flag.String("pprofAddr", "", "golang pprof debug address.")
 	rtmpAddr  = flag.String("rtmpAddr", ":1935", "The rtmp server address to bind.")
-	flvAddr   = flag.String("flvAddr", ":8081", "the http-flv server address to bind.")
-	hlsAddr   = flag.String("hlsAddr", ":8080", "the hls server address to bind.")
+	flvAddr   = flag.String("flvAddr", ":8080", "the http-flv server address to bind.")
+	hlsAddr   = flag.String("hlsAddr", ":8081", "the hls server address to bind.")
 	operaAddr = flag.String("operaAddr", "", "the http operation or config address to bind: 8082.")
-	flvDvr    = flag.Bool("flvDvr", true, "enable flv dvr")
+	flvDvr    = flag.Bool("flvDvr", false, "enable flv dvr")
 )
 
 var (
@@ -80,7 +80,7 @@ func main() {
 
 	stream := rtmp.NewRtmpStream()
 	// hls
-	startHls()
+	// startHls()
 	// flv dvr
 	startFlvDvr()
 	// rtmp
@@ -133,13 +133,18 @@ func startRtmp(stream *rtmp.RtmpStream, getters []av.GetWriter) {
 	}()
 }
 
+func httpFlvCloseCallback(url string, app string, uid string) {
+	log.Infof("httpFlvCloseCallback. url %s. app %s. uid %s", url, app, uid)
+}
+
 func startHTTPFlv(stream *rtmp.RtmpStream) {
 	flvListen, err := net.Listen("tcp", *flvAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	hdlServer := httpflv.NewServer(stream)
+	// hdlServer := httpflv.NewServer(stream)
+	hdlServer := httpflv.NewServerFunc(stream, httpFlvCloseCallback)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {

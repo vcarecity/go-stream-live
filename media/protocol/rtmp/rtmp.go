@@ -107,10 +107,12 @@ func (self *Server) handleConn(conn *core.Conn) error {
 		log.Errorln("handleConn read msg err:", err)
 		return err
 	}
+
 	if connServer.IsPublisher() {
+		// rtmp push
 		reader := NewVirReader(connServer)
 		self.handler.HandleReader(reader)
-		log.Debugf("new publisher: %v", reader.Info())
+		log.Debugf("new rtmp publisher: %v", reader.Info())
 
 		if len(self.getters) > 0 {
 			for _, getter := range self.getters {
@@ -121,8 +123,9 @@ func (self *Server) handleConn(conn *core.Conn) error {
 			}
 		}
 	} else {
+		// rtmp play
 		writer := NewVirWriter(connServer)
-		log.Infof("new player: %v", writer.Info())
+		log.Debugf("new player: %v", writer.Info())
 		self.handler.HandleWriter(writer)
 	}
 
@@ -212,6 +215,7 @@ func (self *VirWriter) Write(p av.Packet) error {
 		if len(self.packetQueue) >= maxQueueNum-24 {
 			self.DropPacket(self.packetQueue, self.Info())
 		} else {
+			// add to queue
 			self.packetQueue <- p
 		}
 		return nil
@@ -225,6 +229,7 @@ func (self *VirWriter) SendPacket() error {
 	for {
 		p, ok := <-self.packetQueue
 		if ok {
+			// write chunk size data from queue
 			cs.Data = p.Data
 			cs.Length = uint32(len(p.Data))
 			cs.StreamID = 1
@@ -243,6 +248,7 @@ func (self *VirWriter) SendPacket() error {
 
 			self.SetPreTime()
 			self.RecTimeStamp(cs.Timestamp, cs.TypeID)
+			// send data to rtmp player client
 			err := self.conn.Write(cs)
 			if err != nil {
 				self.closed = true
@@ -294,6 +300,7 @@ func NewVirReader(conn StreamReadWriteCloser) *VirReader {
 	}
 }
 
+// read a packet
 func (self *VirReader) Read(p *av.Packet) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -318,10 +325,10 @@ func (self *VirReader) Read(p *av.Packet) (err error) {
 
 	p.IsAudio = cs.TypeID == av.TAG_AUDIO
 	p.IsVideo = cs.TypeID == av.TAG_VIDEO
-	p.IsMetadata = (cs.TypeID == av.TAG_SCRIPTDATAAMF0 || cs.TypeID == av.TAG_SCRIPTDATAAMF3)
+	p.IsMetadata = cs.TypeID == av.TAG_SCRIPTDATAAMF0 || cs.TypeID == av.TAG_SCRIPTDATAAMF3
 	p.Data = cs.Data
 	p.TimeStamp = cs.Timestamp
-	self.demuxer.DemuxH(p)
+	err = self.demuxer.DemuxH(p)
 	return err
 }
 

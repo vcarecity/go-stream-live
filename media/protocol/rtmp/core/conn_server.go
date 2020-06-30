@@ -295,7 +295,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 		case cmdFCUnpublish:
 		case cmdDeleteStream:
 		default:
-			log.Infoln("no support command=", vs[0].(string))
+			log.Infof("no support command = %s", vs[0].(string))
 		}
 	}
 

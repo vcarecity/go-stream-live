@@ -16,8 +16,11 @@ import (
 	"errors"
 )
 
+type FLVCloseCallback func(url string, app string, uid string)
+
 type Server struct {
-	handler av.Handler
+	handler       av.Handler
+	closeCallback FLVCloseCallback
 }
 
 type stream struct {
@@ -35,15 +38,19 @@ func NewServer(h av.Handler) *Server {
 		handler: h,
 	}
 }
+func NewServerFunc(h av.Handler, callback FLVCloseCallback) *Server {
+	return &Server{
+		handler:       h,
+		closeCallback: callback,
+	}
+}
 
 func (self *Server) Serve(l net.Listener) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.handleConn(w, r)
 	})
 	mux.HandleFunc("/streams", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.getStream(w, r)
 	})
 	http.Serve(l, mux)
@@ -89,6 +96,8 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	url := r.URL.String()
 	u := r.URL.Path
 	if pos := strings.LastIndex(u, "."); pos < 0 || u[pos:] != ".flv" {
@@ -97,15 +106,15 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 	path := strings.TrimSuffix(strings.TrimLeft(u, "/"), ".flv")
 	paths := strings.SplitN(path, "/", 2)
-	log.Infoln("url:", u, "path:", path, "paths:", paths)
+
+	log.Debugf("url: %s. path: %s. paths: %s.", u, path, paths)
 
 	if len(paths) != 2 {
 		http.Error(w, "invalid path", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	writer := NewFLVWriter(paths[0], paths[1], url, w)
+	writer := NewFLVWriter(paths[0], paths[1], url, w, self.closeCallback)
 
 	self.handler.HandleWriter(writer)
 	writer.Wait()
@@ -125,19 +134,21 @@ type FLVWriter struct {
 	closedChan      chan struct{}
 	ctx             http.ResponseWriter
 	packetQueue     chan av.Packet
+	closeCallback   FLVCloseCallback
 }
 
-func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
+func NewFLVWriter(app, title, url string, ctx http.ResponseWriter, callback FLVCloseCallback) *FLVWriter {
 	ret := &FLVWriter{
-		Uid:         uid.NEWID(),
-		app:         app,
-		title:       title,
-		url:         url,
-		ctx:         ctx,
-		RWBaser:     av.NewRWBaser(time.Second * 10),
-		closedChan:  make(chan struct{}),
-		buf:         make([]byte, headerLen),
-		packetQueue: make(chan av.Packet, maxQueueNum),
+		Uid:           uid.NEWID(),
+		app:           app,
+		title:         title,
+		url:           url,
+		ctx:           ctx,
+		RWBaser:       av.NewRWBaser(time.Second * 10),
+		closedChan:    make(chan struct{}),
+		buf:           make([]byte, headerLen),
+		packetQueue:   make(chan av.Packet, maxQueueNum),
+		closeCallback: callback,
 	}
 
 	ret.ctx.Write([]byte{0x46, 0x4c, 0x56, 0x01, 0x05, 0x00, 0x00, 0x00, 0x09})
@@ -146,9 +157,10 @@ func NewFLVWriter(app, title, url string, ctx http.ResponseWriter) *FLVWriter {
 	go func() {
 		err := ret.SendPacket()
 		if err != nil {
-			log.Errorln("SendPacket error:", err)
+			log.Errorf("SendPacket error: %v", err)
 			ret.closed = true
 		}
+		// send stream to http flv stop ..
 	}()
 	return ret
 }
@@ -187,7 +199,9 @@ func (self *FLVWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
 }
 
 func (self *FLVWriter) Write(p av.Packet) error {
+	// stream write packet to here
 	if !self.closed {
+		// add to queue or drop
 		if len(self.packetQueue) >= maxQueueNum-24 {
 			self.DropPacket(self.packetQueue, self.Info())
 		} else {
@@ -195,6 +209,10 @@ func (self *FLVWriter) Write(p av.Packet) error {
 		}
 		return nil
 	} else {
+		if self != nil {
+			// update callback
+			go self.closeCallback(self.url, self.app, self.Uid)
+		}
 		return errors.New("closed")
 	}
 
@@ -249,7 +267,6 @@ func (self *FLVWriter) SendPacket() error {
 		} else {
 			return errors.New("closed")
 		}
-
 	}
 
 	return nil

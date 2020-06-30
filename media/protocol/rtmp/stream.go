@@ -44,6 +44,9 @@ func (rs *RtmpStream) HandleReader(r av.ReadCloser) {
 				s = ns
 				rs.streams.Set(info.Key, ns)
 			}
+		} else {
+			// TODO fix nil
+			return
 		}
 	}
 	s.AddReader(r)
@@ -146,7 +149,8 @@ func (s *Stream) AddWriter(w av.WriteCloser) {
 func (s *Stream) TransStart() {
 	defer func() {
 		if s.r != nil {
-			log.Infof("[%v] Transport stop", s.r.Info())
+			log.Infof("Transport stop [%v] ", s.r.Info())
+			// end loop and callback
 		}
 		// debug mode don't use it
 		// 	if r := recover(); r != nil {
@@ -168,6 +172,7 @@ func (s *Stream) TransStart() {
 			s.closeInter()
 			return
 		}
+
 		s.cache.Write(p)
 
 		for item := range s.ws.IterBuffered() {
@@ -180,6 +185,7 @@ func (s *Stream) TransStart() {
 				}
 				v.init = true
 			} else {
+				// write packet to w
 				if err = v.w.Write(p); err != nil {
 					log.Errorf("[%s] write packet error: %v, remove", v.w.Info(), err)
 					s.ws.Remove(item.Key)
@@ -187,6 +193,7 @@ func (s *Stream) TransStart() {
 			}
 		}
 	}
+
 }
 
 func (s *Stream) TransStop() {
@@ -208,7 +215,7 @@ func (s *Stream) CheckAlive() (n int) {
 		v := item.Val.(*PackWriterCloser)
 		if v.w != nil {
 			if !v.w.Alive() {
-				log.Infof("[%v] player closed and remove\n", v.w.Info())
+				log.Infof("[%v] player closed and remove", v.w.Info())
 				s.ws.Remove(item.Key)
 				v.w.Close(errors.New("write timeout"))
 				continue
@@ -225,7 +232,7 @@ func (s *Stream) closeInter() {
 		if v.w != nil {
 			if v.w.Info().IsInterval() {
 				v.w.Close(errors.New("closed"))
-				log.Infof("[%v] player closed and remove\n", v.w.Info())
+				log.Infof("[%v] player closed and remove", v.w.Info())
 				s.ws.Remove(item.Key)
 			}
 		}

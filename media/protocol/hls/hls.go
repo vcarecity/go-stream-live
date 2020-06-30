@@ -24,7 +24,7 @@ const (
 )
 
 var (
-	ErrNoPublisher         = errors.New("No publisher")
+	ErrNoPublisher         = errors.New("no publisher")
 	ErrInvalidReq          = errors.New("invalid req url path")
 	ErrNoSupportVideoCodec = errors.New("no support video codec")
 	ErrNoSupportAudioCodec = errors.New("no support audio codec")
@@ -216,7 +216,7 @@ func NewSource(info av.Info) *Source {
 	go func() {
 		err := s.SendPacket()
 		if err != nil {
-			log.Errorf("send packet error: %v\n", err)
+			log.Errorf("send packet error: %v", err)
 			s.closed = true
 		}
 	}()
