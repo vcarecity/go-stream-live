@@ -48,9 +48,11 @@ func NewServerFunc(h av.Handler, callback FLVCloseCallback) *Server {
 func (self *Server) Serve(l net.Listener) error {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.handleConn(w, r)
 	})
 	mux.HandleFunc("/streams", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		self.getStream(w, r)
 	})
 	http.Serve(l, mux)
@@ -95,8 +97,6 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 			log.Errorln("http flv handleConn panic: ", r)
 		}
 	}()
-
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	url := r.URL.String()
 	u := r.URL.Path
