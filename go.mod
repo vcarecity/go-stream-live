@@ -1,4 +1,4 @@
-module go-stream-live
+module github.com/vcarecity/go-stream-live
 
 go 1.13
 
