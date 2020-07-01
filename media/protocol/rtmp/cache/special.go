@@ -2,10 +2,10 @@ package cache
 
 import (
 	"bytes"
-	"go-stream-live/media/protocol/amf"
+	"github.com/vcarecity/go-stream-live/media/protocol/amf"
 	"log"
 
-	"go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/av"
 )
 
 const (

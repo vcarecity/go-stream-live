@@ -2,8 +2,8 @@ package core
 
 import (
 	"encoding/binary"
-	"go-stream-live/media/utils/pio"
-	"go-stream-live/media/utils/pool"
+	"github.com/vcarecity/go-stream-live/media/utils/pio"
+	"github.com/vcarecity/go-stream-live/media/utils/pool"
 	"net"
 	"time"
 )

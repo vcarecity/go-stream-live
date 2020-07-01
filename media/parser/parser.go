@@ -2,10 +2,10 @@ package parser
 
 import (
 	"errors"
-	"go-stream-live/media/av"
-	"go-stream-live/media/parser/aac"
-	"go-stream-live/media/parser/h264"
-	"go-stream-live/media/parser/mp3"
+	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/parser/aac"
+	"github.com/vcarecity/go-stream-live/media/parser/h264"
+	"github.com/vcarecity/go-stream-live/media/parser/mp3"
 	"io"
 )
 

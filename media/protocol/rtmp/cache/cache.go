@@ -1,6 +1,6 @@
 package cache
 
-import "go-stream-live/media/av"
+import "github.com/vcarecity/go-stream-live/media/av"
 import "flag"
 
 var (

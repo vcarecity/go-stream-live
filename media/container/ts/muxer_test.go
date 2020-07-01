@@ -1,7 +1,7 @@
 package ts
 
 import (
-	"go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/av"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

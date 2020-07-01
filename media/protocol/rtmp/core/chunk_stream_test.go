@@ -2,7 +2,7 @@ package core
 
 import (
 	"bytes"
-	"go-stream-live/media/utils/pool"
+	"github.com/vcarecity/go-stream-live/media/utils/pool"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

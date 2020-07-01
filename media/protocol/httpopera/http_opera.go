@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	log "github.com/sirupsen/logrus"
 
-	"go-stream-live/media/av"
-	"go-stream-live/media/protocol/rtmp"
-	"go-stream-live/media/utils/uid"
+	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/protocol/rtmp"
+	"github.com/vcarecity/go-stream-live/media/utils/uid"
 	"io/ioutil"
 	"net"
 	"net/http"

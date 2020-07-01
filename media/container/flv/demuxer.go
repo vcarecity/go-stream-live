@@ -2,7 +2,7 @@ package flv
 
 import (
 	"errors"
-	"go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/av"
 )
 
 var (

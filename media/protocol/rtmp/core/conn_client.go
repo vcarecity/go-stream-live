@@ -6,8 +6,8 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 
-	"go-stream-live/media/av"
-	"go-stream-live/media/protocol/amf"
+	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/protocol/amf"
 	"io"
 	"math/rand"
 	"net"

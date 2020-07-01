@@ -3,8 +3,8 @@ package core
 import (
 	"encoding/binary"
 	"fmt"
-	"go-stream-live/media/av"
-	"go-stream-live/media/utils/pool"
+	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/utils/pool"
 )
 
 type ChunkStream struct {

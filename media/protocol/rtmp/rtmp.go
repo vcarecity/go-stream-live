@@ -3,10 +3,10 @@ package rtmp
 import (
 	log "github.com/sirupsen/logrus"
 
-	"go-stream-live/media/av"
-	"go-stream-live/media/container/flv"
-	"go-stream-live/media/protocol/rtmp/core"
-	"go-stream-live/media/utils/uid"
+	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/container/flv"
+	"github.com/vcarecity/go-stream-live/media/protocol/rtmp/core"
+	"github.com/vcarecity/go-stream-live/media/utils/uid"
 	"net"
 	"time"
 

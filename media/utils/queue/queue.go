@@ -3,7 +3,7 @@ package queue
 import (
 	"sync"
 
-	"go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/av"
 )
 
 // Queue is a basic FIFO queue for Messages.
