@@ -148,7 +148,7 @@ func startHTTPFlv(stream *rtmp.RtmpStream) {
 	}
 
 	// hdlServer := httpflv.NewServer(stream)
-	hdlServer := httpflv.NewServerFunc(stream, httpFlvCloseCallback)
+	hdlServer := httpflv.NewServerFunc(stream, nil, httpFlvCloseCallback)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
