@@ -1,9 +1,8 @@
 package ts
 
 import (
+	"go-stream-live/media/av"
 	"testing"
-
-	"sheepbao.com/media/av"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -13,7 +12,7 @@ type TestWriter struct {
 	count int
 }
 
-//Write write p to w.buf
+// Write write p to w.buf
 func (w *TestWriter) Write(p []byte) (int, error) {
 	w.count++
 	w.buf = p
