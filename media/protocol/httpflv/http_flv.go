@@ -10,14 +10,13 @@ import (
 	"github.com/vcarecity/go-stream-live/media/utils/uid"
 	"net"
 	"net/http"
-	neturl "net/url"
 	"strings"
 	"time"
 
 	"errors"
 )
 
-type FLVConnectCallback func(url *neturl.URL, headers http.Header)
+type FLVConnectCallback func(url string, app string, uid string, headers http.Header)
 type FLVCloseCallback func(url string, app string, uid string)
 
 type Server struct {
@@ -102,10 +101,6 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	if self.connCallback != nil {
-		go self.connCallback(r.URL, r.Header)
-	}
-
 	url := r.URL.String()
 	u := r.URL.Path
 	if pos := strings.LastIndex(u, "."); pos < 0 || u[pos:] != ".flv" {
@@ -123,6 +118,10 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writer := NewFLVWriter(paths[0], paths[1], url, w, self.closeCallback)
+
+	if self.connCallback != nil {
+		go self.connCallback(writer.url, writer.app, writer.Uid, r.Header)
+	}
 
 	self.handler.HandleWriter(writer)
 	writer.Wait()
