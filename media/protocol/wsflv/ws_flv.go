@@ -17,10 +17,12 @@ import (
 	"time"
 )
 
+type FLVConnectCallback func(url string, app string, uid string, headers http.Header)
 type FLVCloseCallback func(url string, app string, uid string)
 
 type Server struct {
 	handler       av.Handler
+	connCallback  FLVConnectCallback
 	closeCallback FLVCloseCallback
 }
 type stream struct {
@@ -37,9 +39,10 @@ func NewServer(h av.Handler) *Server {
 		handler: h,
 	}
 }
-func NewServerFunc(h av.Handler, callback FLVCloseCallback) *Server {
+func NewServerFunc(h av.Handler, connCallback FLVConnectCallback, callback FLVCloseCallback) *Server {
 	return &Server{
 		handler:       h,
+		connCallback:  connCallback,
 		closeCallback: callback,
 	}
 }
@@ -92,6 +95,10 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writer := NewFLVWriter(paths[0], paths[1], url, c, self.closeCallback)
+
+	if self.connCallback != nil {
+		go self.connCallback(writer.url, writer.app, writer.Uid, r.Header)
+	}
 
 	self.handler.HandleWriter(writer)
 	writer.Wait()

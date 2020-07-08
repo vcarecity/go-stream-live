@@ -166,7 +166,7 @@ func startWebsocketFlv(stream *rtmp.RtmpStream) {
 	}
 
 	// wsServer := wsflv.NewServer(stream)
-	wsServer := wsflv.NewServerFunc(stream, httpFlvCloseCallback)
+	wsServer := wsflv.NewServerFunc(stream, nil, httpFlvCloseCallback)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
