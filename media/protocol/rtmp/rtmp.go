@@ -1,7 +1,7 @@
 package rtmp
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/container/flv"
@@ -78,7 +78,7 @@ func NewRtmpServer(h av.Handler, getters []av.GetWriter) *Server {
 func (self *Server) Serve(listener net.Listener) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorln("rtmp serve panic: ", r)
+			log.Logger().Errorln("rtmp serve panic: ", r)
 		}
 	}()
 
@@ -89,7 +89,7 @@ func (self *Server) Serve(listener net.Listener) (err error) {
 			return
 		}
 		conn := core.NewConn(netconn, 4*1024)
-		log.Debugf("new client, connect remote: %s. local: %s", conn.RemoteAddr().String(), conn.LocalAddr().String())
+		log.Logger().Debugf("new client, connect remote: %s. local: %s", conn.RemoteAddr().String(), conn.LocalAddr().String())
 		go self.handleConn(conn)
 	}
 }
@@ -97,14 +97,14 @@ func (self *Server) Serve(listener net.Listener) (err error) {
 func (self *Server) handleConn(conn *core.Conn) error {
 	if err := conn.HandshakeServer(); err != nil {
 		conn.Close()
-		log.Errorln("handleConn HandshakeServer err:", err)
+		log.Logger().Errorln("handleConn HandshakeServer err:", err)
 		return err
 	}
 	connServer := core.NewConnServer(conn)
 
 	if err := connServer.ReadMsg(); err != nil {
 		conn.Close()
-		log.Errorln("handleConn read msg err:", err)
+		log.Logger().Errorln("handleConn read msg err:", err)
 		return err
 	}
 
@@ -112,7 +112,7 @@ func (self *Server) handleConn(conn *core.Conn) error {
 		// rtmp push
 		reader := NewVirReader(connServer)
 		self.handler.HandleReader(reader)
-		log.Debugf("new rtmp publisher: %v", reader.Info())
+		log.Logger().Debugf("new rtmp publisher: %v", reader.Info())
 
 		if len(self.getters) > 0 {
 			for _, getter := range self.getters {
@@ -125,7 +125,7 @@ func (self *Server) handleConn(conn *core.Conn) error {
 	} else {
 		// rtmp play
 		writer := NewVirWriter(connServer)
-		log.Debugf("new player: %v", writer.Info())
+		log.Logger().Debugf("new player: %v", writer.Info())
 		self.handler.HandleWriter(writer)
 	}
 
@@ -162,7 +162,7 @@ func NewVirWriter(conn StreamReadWriteCloser) *VirWriter {
 	go func() {
 		err := ret.SendPacket()
 		if err != nil {
-			log.Errorln("send packet error: ", err)
+			log.Logger().Errorln("send packet error: ", err)
 		}
 	}()
 	return ret
@@ -179,14 +179,14 @@ func (self *VirWriter) Check() {
 }
 
 func (self *VirWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
-	log.Errorf("[%v] packet queue max!!!", info)
+	log.Logger().Errorf("[%v] packet queue max!!!", info)
 	for i := 0; i < maxQueueNum-84; i++ {
 		tmpPkt, ok := <-pktQue
 		if ok {
 			// try to don't drop audio
 			if tmpPkt.IsAudio {
 				if len(pktQue) > maxQueueNum-2 {
-					log.Infoln("drop audio pkt")
+					log.Logger().Infoln("drop audio pkt")
 					<-pktQue
 				} else {
 					pktQue <- tmpPkt
@@ -200,13 +200,13 @@ func (self *VirWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
 					pktQue <- tmpPkt
 				}
 				if len(pktQue) > maxQueueNum-10 {
-					log.Infoln("drop video pkt")
+					log.Logger().Infoln("drop video pkt")
 					<-pktQue
 				}
 			}
 		}
 	}
-	log.Infoln("packet queue len: ", len(pktQue))
+	log.Logger().Infoln("packet queue len: ", len(pktQue))
 }
 
 //
@@ -269,14 +269,14 @@ func (self *VirWriter) Info() (ret av.Info) {
 	ret.URL = URL
 	_url, err := url.Parse(URL)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 	}
 	ret.Key = strings.TrimLeft(_url.Path, "/")
 	return
 }
 
 func (self *VirWriter) Close(err error) {
-	log.Infoln("player ", self.Info(), "closed: "+err.Error())
+	log.Logger().Infoln("player ", self.Info(), "closed: "+err.Error())
 	if !self.closed {
 		close(self.packetQueue)
 	}
@@ -304,7 +304,7 @@ func NewVirReader(conn StreamReadWriteCloser) *VirReader {
 func (self *VirReader) Read(p *av.Packet) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorln("rtmp read packet panic: ", r)
+			log.Logger().Errorln("rtmp read packet panic: ", r)
 		}
 	}()
 
@@ -339,13 +339,13 @@ func (self *VirReader) Info() (ret av.Info) {
 	ret.URL = URL
 	_url, err := url.Parse(URL)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 	}
 	ret.Key = strings.TrimLeft(_url.Path, "/")
 	return
 }
 
 func (self *VirReader) Close(err error) {
-	log.Infoln("publisher ", self.Info(), "closed: "+err.Error())
+	log.Logger().Infoln("publisher ", self.Info(), "closed: "+err.Error())
 	self.conn.Close(err)
 }

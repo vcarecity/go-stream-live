@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/protocol/amf"
@@ -206,9 +206,9 @@ func (self *ConnClient) Start(url string, method string) error {
 		port = ":" + port
 	}
 	ips, err := net.LookupIP(host)
-	log.Infof("ips: %v, host: %v", ips, host)
+	log.Logger().Infof("ips: %v, host: %v", ips, host)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 		return err
 	}
 	remoteIP = ips[rand.Intn(len(ips))].String()
@@ -218,22 +218,22 @@ func (self *ConnClient) Start(url string, method string) error {
 
 	local, err := net.ResolveTCPAddr("tcp", localIP)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 		return err
 	}
-	log.Infoln("remoteIP: ", remoteIP)
+	log.Logger().Infoln("remoteIP: ", remoteIP)
 	remote, err := net.ResolveTCPAddr("tcp", remoteIP)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 		return err
 	}
 	conn, err := net.DialTCP("tcp", local, remote)
 	if err != nil {
-		log.Errorln(err)
+		log.Logger().Errorln(err)
 		return err
 	}
 
-	log.Infoln("connection:", "local:", conn.LocalAddr(), "remote:", conn.RemoteAddr())
+	log.Logger().Infoln("connection:", "local:", conn.LocalAddr(), "remote:", conn.RemoteAddr())
 
 	self.conn = NewConn(conn, 4*1024)
 	if err := self.conn.HandshakeClient(); err != nil {

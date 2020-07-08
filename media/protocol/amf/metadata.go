@@ -3,7 +3,7 @@ package amf
 import (
 	"bytes"
 	"fmt"
-	"log"
+	"github.com/vcarecity/go-stream-live/log"
 )
 
 const (
@@ -22,7 +22,7 @@ func init() {
 	b := bytes.NewBuffer(nil)
 	encoder := &Encoder{}
 	if _, err := encoder.Encode(b, SetDataFrame, AMF0); err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 	setFrameFrame = b.Bytes()
 }

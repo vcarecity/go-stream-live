@@ -1,7 +1,7 @@
 package flv
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/protocol/amf"
 	"github.com/vcarecity/go-stream-live/media/utils/pio"
@@ -30,7 +30,7 @@ func NewFlvDvr(dir string) *FlvDvr {
 func (f *FlvDvr) GetWriter(info av.Info) av.WriteCloser {
 	paths := strings.SplitN(info.Key, "/", 2)
 	if len(paths) != 2 {
-		log.Errorln("invalid info")
+		log.Logger().Errorln("invalid info")
 		return nil
 	}
 
@@ -39,23 +39,23 @@ func (f *FlvDvr) GetWriter(info av.Info) av.WriteCloser {
 	if err != nil {
 		err := os.MkdirAll(saveDir, 0755)
 		if err != nil {
-			log.Errorln("mkdir error:", err)
+			log.Logger().Errorln("mkdir error:", err)
 			return nil
 		}
 	}
 
 	fileName := fmt.Sprintf("%s_%d.%s", filepath.Join(f.Dir, info.Key), time.Now().Unix(), "flv")
 
-	log.Debugf("flv dvr save stream to: %s", fileName)
+	log.Logger().Debugf("flv dvr save stream to: %s", fileName)
 
 	w, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0755)
 	if err != nil {
-		log.Errorln("open file error: ", err)
+		log.Logger().Errorln("open file error: ", err)
 		return nil
 	}
 
 	writer := NewFLVWriter(paths[0], paths[1], info.URL, w)
-	log.Infoln("new flv dvr: ", writer.Info())
+	log.Logger().Infoln("new flv dvr: ", writer.Info())
 	return writer
 }
 
@@ -137,7 +137,7 @@ func (self *FLVWriter) Write(p av.Packet) error {
 }
 
 func (self *FLVWriter) Close(error) {
-	log.Infoln("flv dvr closed")
+	log.Logger().Infoln("flv dvr closed")
 	self.ctx.Close()
 }
 

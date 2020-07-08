@@ -2,7 +2,7 @@ package rtmp
 
 import (
 	"errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/protocol/rtmp/cache"
@@ -81,7 +81,7 @@ func (rs *RtmpStream) CheckAlive() {
 			if v.CheckAlive() == 0 {
 				rs.streams.Remove(item.Key)
 				if v.r != nil {
-					log.Infof("check alive and remove: %v", v.r.Info())
+					log.Logger().Infof("check alive and remove: %v", v.r.Info())
 				}
 			}
 		}
@@ -149,12 +149,12 @@ func (s *Stream) AddWriter(w av.WriteCloser) {
 func (s *Stream) TransStart() {
 	defer func() {
 		if s.r != nil {
-			log.Infof("Transport stop [%v] ", s.r.Info())
+			log.Logger().Infof("Transport stop [%v] ", s.r.Info())
 			// end loop and callback
 		}
 		// debug mode don't use it
 		// 	if r := recover(); r != nil {
-		// 		log.Errorln("rtmp TransStart panic: ", r)
+		// 		log.Logger()Errorln("rtmp TransStart panic: ", r)
 		// 	}
 	}()
 
@@ -179,7 +179,7 @@ func (s *Stream) TransStart() {
 			v := item.Val.(*PackWriterCloser)
 			if !v.init {
 				if err = s.cache.Send(v.w); err != nil {
-					log.Errorf("[%s] send cache packet error: %v, remove", v.w.Info(), err)
+					log.Logger().Errorf("[%s] send cache packet error: %v, remove", v.w.Info(), err)
 					s.ws.Remove(item.Key)
 					continue
 				}
@@ -187,7 +187,7 @@ func (s *Stream) TransStart() {
 			} else {
 				// write packet to w
 				if err = v.w.Write(p); err != nil {
-					log.Errorf("[%s] write packet error: %v, remove", v.w.Info(), err)
+					log.Logger().Errorf("[%s] write packet error: %v, remove", v.w.Info(), err)
 					s.ws.Remove(item.Key)
 				}
 			}
@@ -215,7 +215,7 @@ func (s *Stream) CheckAlive() (n int) {
 		v := item.Val.(*PackWriterCloser)
 		if v.w != nil {
 			if !v.w.Alive() {
-				log.Infof("[%v] player closed and remove", v.w.Info())
+				log.Logger().Infof("[%v] player closed and remove", v.w.Info())
 				s.ws.Remove(item.Key)
 				v.w.Close(errors.New("write timeout"))
 				continue
@@ -232,7 +232,7 @@ func (s *Stream) closeInter() {
 		if v.w != nil {
 			if v.w.Info().IsInterval() {
 				v.w.Close(errors.New("closed"))
-				log.Infof("[%v] player closed and remove", v.w.Info())
+				log.Logger().Infof("[%v] player closed and remove", v.w.Info())
 				s.ws.Remove(item.Key)
 			}
 		}

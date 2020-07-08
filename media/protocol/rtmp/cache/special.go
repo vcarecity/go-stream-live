@@ -2,10 +2,9 @@ package cache
 
 import (
 	"bytes"
-	"github.com/vcarecity/go-stream-live/media/protocol/amf"
-	"log"
-
+	"github.com/vcarecity/go-stream-live/log"
 	"github.com/vcarecity/go-stream-live/media/av"
+	"github.com/vcarecity/go-stream-live/media/protocol/amf"
 )
 
 const (
@@ -19,7 +18,7 @@ func init() {
 	b := bytes.NewBuffer(nil)
 	encoder := &amf.Encoder{}
 	if _, err := encoder.Encode(b, SetDataFrame, amf.AMF0); err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 	setFrameFrame = b.Bytes()
 }

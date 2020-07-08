@@ -3,7 +3,7 @@ package core
 import (
 	"bytes"
 	"errors"
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/protocol/amf"
@@ -250,7 +250,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 	if err != nil && err != io.EOF {
 		return err
 	}
-	// log.Infof("rtmp req: %#v", vs)
+	// log.Logger()Infof("rtmp req: %#v", vs)
 	switch vs[0].(type) {
 	case string:
 		switch vs[0].(string) {
@@ -277,7 +277,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			self.done = true
 			self.isPublisher = true
-			log.Debugf("handle publish req done")
+			log.Logger().Debugf("handle publish req done")
 		case cmdPlay:
 			if err = self.publishOrPlay(vs[1:]); err != nil {
 				return err
@@ -287,7 +287,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 			}
 			self.done = true
 			self.isPublisher = false
-			log.Debugf("handle play req done")
+			log.Logger().Debugf("handle play req done")
 		case cmdFcpublish:
 			self.fcPublish(vs)
 		case cmdReleaseStream:
@@ -295,7 +295,7 @@ func (self *ConnServer) handleCmdMsg(c *ChunkStream) error {
 		case cmdFCUnpublish:
 		case cmdDeleteStream:
 		default:
-			log.Infof("no support command = %s", vs[0].(string))
+			log.Logger().Debugf("no support command = %s", vs[0].(string))
 		}
 	}
 

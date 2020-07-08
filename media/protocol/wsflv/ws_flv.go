@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/protocol/amf"
 	"github.com/vcarecity/go-stream-live/media/protocol/rtmp"
@@ -62,7 +62,7 @@ func (self *Server) Serve(l net.Listener) error {
 func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorln("websocket flv handleConn panic: ", r)
+			log.Logger().Errorln("websocket flv handleConn panic: ", r)
 		}
 	}()
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -75,7 +75,7 @@ func (self *Server) handleConn(w http.ResponseWriter, r *http.Request) {
 	path := strings.TrimSuffix(strings.TrimLeft(u, "/"), ".flv")
 	paths := strings.SplitN(path, "/", 2)
 
-	log.Debugf("url: %s. path: %s. paths: %s.", u, path, paths)
+	log.Logger().Debugf("url: %s. path: %s. paths: %s.", u, path, paths)
 
 	if len(paths) != 2 {
 		http.Error(w, "invalid path", http.StatusBadRequest)
@@ -141,7 +141,7 @@ func NewFLVWriter(app, title, url string, ctx *websocket.Conn, callback FLVClose
 	go func() {
 		err := ret.SendPacket()
 		if err != nil {
-			log.Errorf("SendPacket error: %v", err)
+			log.Logger().Errorf("SendPacket error: %v", err)
 			ret.closed = true
 		}
 		// send stream to http flv stop ..
@@ -182,13 +182,13 @@ func (s *Server) getStream(w http.ResponseWriter, r *http.Request) {
 }
 
 func (self *FLVWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
-	log.Errorf("[%v] packet queue max!!!", info)
+	log.Logger().Errorf("[%v] packet queue max!!!", info)
 	for i := 0; i < maxQueueNum-84; i++ {
 		tmpPkt, ok := <-pktQue
 		if ok {
 			// try to don't drop audio
 			if tmpPkt.IsAudio {
-				log.Infoln("insert audio to queue")
+				log.Logger().Infoln("insert audio to queue")
 				if len(pktQue) > maxQueueNum-2 {
 					<-pktQue
 				} else {
@@ -203,7 +203,7 @@ func (self *FLVWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
 				}
 				// dont't drop sps config and dont't drop key frame
 				if videoPkt.IsSeq() || videoPkt.IsKeyFrame() {
-					log.Infoln("insert keyframe to queue")
+					log.Logger().Infoln("insert keyframe to queue")
 					pktQue <- tmpPkt
 				}
 			}
@@ -211,7 +211,7 @@ func (self *FLVWriter) DropPacket(pktQue chan av.Packet, info av.Info) {
 		}
 
 	}
-	log.Infoln("packet queue len: ", len(pktQue))
+	log.Logger().Infoln("packet queue len: ", len(pktQue))
 }
 
 func (self *FLVWriter) Write(p av.Packet) error {
@@ -292,7 +292,7 @@ func (self *FLVWriter) Wait() {
 	}
 }
 func (self *FLVWriter) Close(error) {
-	log.Infoln("websocket flv closed")
+	log.Logger().Infoln("websocket flv closed")
 	if !self.closed {
 		close(self.packetQueue)
 		close(self.closedChan)

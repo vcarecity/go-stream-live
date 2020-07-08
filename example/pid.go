@@ -1,7 +1,7 @@
 package main
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -21,7 +21,7 @@ func getParentDirectory(dirctory string) string {
 func getCurrentDirectory() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 	return strings.Replace(dir, "\\", "/", -1)
 }

@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	nested "github.com/antonfisher/nested-logrus-formatter"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"github.com/vcarecity/go-stream-live/log"
+
 	"github.com/vcarecity/go-stream-live/media/av"
 	"github.com/vcarecity/go-stream-live/media/container/flv"
 	"github.com/vcarecity/go-stream-live/media/protocol/hls"
@@ -46,13 +48,16 @@ func BuildTime() string {
 }
 
 func init() {
-	log.SetFormatter(&nested.Formatter{
+
+	logger := log.Logger()
+
+	logger.SetFormatter(&nested.Formatter{
 		HideKeys:        true,
 		TimestampFormat: "2006-01-02 15:04:05",
 		FieldsOrder:     []string{"component", "category"},
 	})
-	log.SetLevel(log.DebugLevel)
-	log.SetOutput(os.Stdout)
+	logger.SetLevel(logrus.DebugLevel)
+	logger.SetOutput(os.Stdout)
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "%s Version[%s]\r\nUsage: %s [OPTIONS]\r\n", programName, VERSION, os.Args[0])
@@ -66,7 +71,7 @@ func catchSignal() {
 	sig := make(chan os.Signal)
 	signal.Notify(sig, syscall.SIGTERM)
 	<-sig
-	log.Fatalln("recieved signal!")
+	log.Logger().Fatalln("recieved signal!")
 	// select {}
 }
 
@@ -74,7 +79,7 @@ func main() {
 
 	defer func() {
 		if r := recover(); r != nil {
-			log.Errorln("main panic: ", r)
+			log.Logger().Errorln("main panic: ", r)
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -104,14 +109,14 @@ func main() {
 func startHls() *hls.Server {
 	hlsListen, err := net.Listen("tcp", *hlsAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 
 	hlsServer := hls.NewServer()
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Errorln("hls server panic: ", r)
+				log.Logger().Errorln("hls server panic: ", r)
 			}
 		}()
 		hlsServer.Serve(hlsListen)
@@ -123,14 +128,14 @@ func startHls() *hls.Server {
 func startRtmp(stream *rtmp.RtmpStream, getters []av.GetWriter) {
 	rtmplisten, err := net.Listen("tcp", *rtmpAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 
 	rtmpServer := rtmp.NewRtmpServer(stream, getters)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Errorln("hls server panic: ", r)
+				log.Logger().Errorln("hls server panic: ", r)
 			}
 		}()
 		rtmpServer.Serve(rtmplisten)
@@ -138,13 +143,14 @@ func startRtmp(stream *rtmp.RtmpStream, getters []av.GetWriter) {
 }
 
 func httpFlvCloseCallback(url string, app string, uid string) {
-	log.Infof("httpFlvCloseCallback. url %s. app %s. uid %s", url, app, uid)
+
+	log.Logger().Infof("httpFlvCloseCallback. url %s. app %s. uid %s", url, app, uid)
 }
 
 func startHTTPFlv(stream *rtmp.RtmpStream) {
 	flvListen, err := net.Listen("tcp", *flvAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 
 	// hdlServer := httpflv.NewServer(stream)
@@ -152,7 +158,7 @@ func startHTTPFlv(stream *rtmp.RtmpStream) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Errorln("hls server panic: ", r)
+				log.Logger().Errorln("hls server panic: ", r)
 			}
 		}()
 		hdlServer.Serve(flvListen)
@@ -162,7 +168,7 @@ func startHTTPFlv(stream *rtmp.RtmpStream) {
 func startWebsocketFlv(stream *rtmp.RtmpStream) {
 	flvListen, err := net.Listen("tcp", *flvAddr)
 	if err != nil {
-		log.Fatal(err)
+		log.Logger().Fatal(err)
 	}
 
 	// wsServer := wsflv.NewServer(stream)
@@ -170,7 +176,7 @@ func startWebsocketFlv(stream *rtmp.RtmpStream) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				log.Errorln("hls server panic: ", r)
+				log.Logger().Errorln("hls server panic: ", r)
 			}
 		}()
 		wsServer.Serve(flvListen)
@@ -181,13 +187,13 @@ func startHTTPOpera(stream *rtmp.RtmpStream) {
 	if *operaAddr != "" {
 		opListen, err := net.Listen("tcp", *operaAddr)
 		if err != nil {
-			log.Fatal(err)
+			log.Logger().Fatal(err)
 		}
 		opServer := httpopera.NewServer(stream)
 		go func() {
 			defer func() {
 				if r := recover(); r != nil {
-					log.Errorln("hls server panic: ", r)
+					log.Logger().Errorln("hls server panic: ", r)
 				}
 			}()
 			opServer.Serve(opListen)
@@ -207,25 +213,25 @@ func startPprof() {
 	if *prof != "" {
 		go func() {
 			if err := http.ListenAndServe(*prof, nil); err != nil {
-				log.Fatal("enable pprof failed: ", err)
+				log.Logger().Fatal("enable pprof failed: ", err)
 			}
 		}()
 	}
 }
 
 func mylog() {
-	log.Printf("SMS Version:  %s\tBuildTime:  %s", VERSION, BuildTime())
-	log.Printf("SMS Start, Rtmp Listen On %s", *rtmpAddr)
-	log.Printf("SMS Start, Hls Listen On %s", *hlsAddr)
-	log.Printf("SMS Start, HTTP-flv Listen On %s", *flvAddr)
+	log.Logger().Printf("SMS Version:  %s\tBuildTime:  %s", VERSION, BuildTime())
+	log.Logger().Printf("SMS Start, Rtmp Listen On %s", *rtmpAddr)
+	log.Logger().Printf("SMS Start, Hls Listen On %s", *hlsAddr)
+	log.Logger().Printf("SMS Start, HTTP-flv Listen On %s", *flvAddr)
 	if *operaAddr != "" {
-		log.Printf("SMS Start, HTTP-Operation Listen On %s", *operaAddr)
+		log.Logger().Printf("SMS Start, HTTP-Operation Listen On %s", *operaAddr)
 	}
 	if *prof != "" {
-		log.Printf("SMS Start, Pprof Server Listen On %s", *prof)
+		log.Logger().Printf("SMS Start, Pprof Server Listen On %s", *prof)
 	}
 	if *flvDvr {
-		log.Printf("SMS Start, Flv Dvr Save On [%s]", "app/streamName.flv")
+		log.Logger().Printf("SMS Start, Flv Dvr Save On [%s]", "app/streamName.flv")
 	}
 	// SavePid()
 }

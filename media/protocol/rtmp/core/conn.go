@@ -48,7 +48,7 @@ func (self *Conn) Read(c *ChunkStream) error {
 	for {
 		h, _ := self.rw.ReadUintBE(1)
 		// if err != nil {
-		// 	log.Errorln("read from conn error: ", err)
+		// 	log.Logger()Errorln("read from conn error: ", err)
 		// 	return err
 		// }
 		format := h >> 6
